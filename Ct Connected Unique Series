@@ -1,0 +1,68 @@
+ # Load necessary libraries
+ library(ggplot2)
+ library(dplyr)
+ 
+ # Assuming your dataset is named 'SARSCoV2_Ct_Dates' with columns 'Days', 'Pt', and 'Ct'
+ 
+ # Step 1: Modify the dataset to add a 'Shape' column based on the 'Ct' value
+ SARSCoV2_Ct_Dates <- SARSCoV2_Ct_Dates %>%
++     mutate(Shape = factor(ifelse(Ct > 33, 1, 16)))  # 1 for unfilled circle (hollow), 16 for filled circle, as a factor
+ 
+ # Step 2: Create the connected scatterplot
+ ggplot(SARSCoV2_Ct_Dates, aes(x = Days, y = Pt, group = Pt, color = factor(Pt), shape = Shape)) +
++     geom_line() +                # Connect points by a line for each Pt group
++     geom_point(size = 3) +       # Plot the points with custom shape
++     labs(x = "Days Since Initial Positive SARS-CoV-2 Swab", 
++          y = "Study Subject (n = 13)", 
++          title = "Connected Scatterplot of Study Subjects Over Time", 
++          color = "Study Subject (Pt)", 
++          shape = "Ct > 33") +     # Legend for shape
++     scale_shape_manual(values = c(1, 16)) +  # Shape 1 is unfilled (hollow), shape 16 is filled
++     theme_minimal() +            # Clean, minimal theme
++     theme(legend.position = "bottom") # Adjust legend position
+ 
+ # Load necessary libraries
+ library(ggplot2)
+ library(dplyr)
+ 
+ # Assuming your dataset is named 'SARSCoV2_Ct_Dates' with columns 'Days', 'Pt', and 'Ct'
+ 
+ # Step 1: Modify the dataset to add a 'Shape' column based on the 'Ct' value
+ SARSCoV2_Ct_Dates <- SARSCoV2_Ct_Dates %>%
++     mutate(Shape = factor(ifelse(Ct > 33, 1, 16)))  # 1 for unfilled circle (hollow), 16 for filled circle, as a factor
+ 
+ # Step 2: Create the connected scatterplot
+ ggplot(SARSCoV2_Ct_Dates, aes(x = Days, y = Pt, group = Pt, color = factor(Pt), shape = Shape)) +
++     geom_line() +                # Connect points by a line for each Pt group
++     geom_point(size = 3) +       # Plot the points with custom shape
++     labs(x = "Days Since Initial Positive SARS-CoV-2 Swab", 
++          y = "Study Subject (n = 13)", 
++          title = "Ct Values Over Time", 
++          color = "Study Subject (Pt)", 
++          shape = "Ct > 33") +     # Legend for shape
++     scale_shape_manual(values = c(1, 16)) +  # Shape 1 is unfilled (hollow), shape 16 is filled
++     theme_minimal() +            # Clean, minimal theme
++     theme(legend.position = "bottom") # Adjust legend position
+ 
+ # Load necessary libraries
+ library(ggplot2)
+ library(dplyr)
+ 
+ # Assuming your dataset is named 'SARSCoV2_Ct_Dates' with columns 'Days', 'Pt', and 'Ct'
+ 
+ # Step 1: Modify the dataset to add a 'Shape' column based on the 'Ct' value
+ SARSCoV2_Ct_Dates <- SARSCoV2_Ct_Dates %>%
++     mutate(Shape = factor(ifelse(Ct > 33, "Not Sequenced Samples", "Sequenced Samples")))  # Use labels directly for the Shape
+ 
+ # Step 2: Create the connected scatterplot
+ ggplot(SARSCoV2_Ct_Dates, aes(x = Days, y = Pt, group = Pt, color = factor(Pt), shape = Shape)) +
++     geom_line() +                # Connect points by a line for each Pt group
++     geom_point(size = 3) +       # Plot the points with custom shape
++     labs(x = "Days Since Initial Positive SARS-CoV-2 Swab", 
++          y = "Study Subject (n = 13)", 
++          title = "Connected Scatterplot of Study Subjects Over Time", 
++          color = "Study Subject (Pt)") +  # Legend for color (Study Subject)
++     scale_shape_manual(values = c("Sequenced Samples" = 16, "Not Sequenced Samples" = 1)) +  # Use filled and unfilled shapes
++     guides(shape = guide_legend(title = "Sample Type")) +  # Customize the shape legend title
++     theme_minimal() +            # Clean, minimal theme
++     theme(legend.position = "bottom") # Adjust legend position
