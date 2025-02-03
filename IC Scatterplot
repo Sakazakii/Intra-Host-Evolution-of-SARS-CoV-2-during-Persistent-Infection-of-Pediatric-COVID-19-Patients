@@ -1,7 +1,7 @@
 # Load necessary library
 library(tidyverse)
  
- data <- SARSCoV2_Ct_Dates
+ data <- SARSCoV2_Master
  
  # Create a series identifier based on 0 in the Days column
  data$series <- cumsum(data$Days == 0)
