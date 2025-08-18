@@ -33,26 +33,33 @@ Through a single center retrospective cohort study, we examined the SARS-CoV-2 g
 ## **Dependencies**
 
 ### **Python Dependencies**
+- Pandas (v2.2.3)
+- Numpy (v.2.2.2)
+- matplotlib (v.3.10.0)
+- biopython (v.1.85)
+- scipy (v.1.15.2)
 
 ### **R Dependencies**
-- tabplot
 - readxl (v.1.4.3)
-- dplyr (v.1.1.2)
+- dplyr (v.4.4.0)
 - lubridate (v.1.9.2)
-- ggplot2 v3.5.1
+- ggplot2 (v3.5.1)
 - tidyr (v.1.3.0)
 - treeio
-- ggtree
-- ape
-- ggtreeExtra
-- ggplot2
-- ggsci
-- TreeTools (v.1.10.0)
-- phylotools (v.1.9-16)
+- ggtree (v3.14.0)
+- ape (v.5.8)
+- ggtreeExtra (v.1.16.0)
+- ggplot2 (v.3.5.1)
+- ggc (v9.2.0)
+- TreeTools (v1.10.0)
+- phylotools (v1.9-16)
 - MAFFT (v7.471)
 - scorpio (v0.3.12)
 - IQ-Tree (v2.0.5)
 - fasttree (v2.1.10)
+- treetime (v.0.11.4)
+- samtools (v1.9)
+- bwa (v0.7.17)
 
 ## **Epidemiological Data Sets**
 
