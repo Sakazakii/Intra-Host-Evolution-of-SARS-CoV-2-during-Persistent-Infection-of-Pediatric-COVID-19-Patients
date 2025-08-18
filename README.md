@@ -4,13 +4,14 @@ Charlie R. Boyle, Tien Doan, Estefany Rios-Guzman, Jessica Maciuch, Lacy M. Simo
 David B. Williams, Arghavan Alisoltani, Egon A. Ozer, Ramon Lorenzo-Redondo, and Judd F. Hultquist
   
 ## **Table of Contents**
-- Introduction
-- Significance and Findings
-- Study Design
-- Dependencies
-- Epidemiological Data Sets
-- Phylogenetic Data Sets
-- Phylogenetic Analysis
+### [1. Introduction](#-introduction)
+### [2. Significance and Findings](#significance-and-findings)
+### [3. Study Design](#study-design)
+### [4. Dependencies](#dependencies)
+### [5. Epidemiological Data Sets](#epidemiological-data-sets)
+### [6. Phylogenetic Data Sets](#phylogenetic-data-sets)
+### [7. Phylogenetic Analysis](#phylogenetic-analysis)
+### [8. Shannon Entropy Analysis](#shannon-entropy-analysis)
 
 ## **Introduction**
 
@@ -53,6 +54,10 @@ Through a single center retrospective cohort study, we examined the SARS-CoV-2 g
 - IQ-Tree (v2.0.5)
 - fasttree (v2.1.10)
 
+## **Epidemiological Data Sets**
+
+## **Phylogenetic Data Sets**
+
 ## **Phylogenetic Analysis**
 ### **Installing Packages and Activating Environment**
 ```
@@ -83,3 +88,5 @@ fasttree -nt -gtr -gamma xxx.mafft.fasta > xxx.tre
 ```
 treetime --tree xxx.tre --aln xxx.mafft.fasta --dates seqs/dates.csv --outdir treetime
 ```
+
+## **Shannon Entropy Analysis**
