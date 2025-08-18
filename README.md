@@ -66,6 +66,8 @@ Through a single center retrospective cohort study, we examined the SARS-CoV-2 g
 
 <a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/blob/main/Immunocompromised/Immunocompromised.csv"> Immunocompromised Host CSV </a>
 ## **Phylogenetic Data Sets**
+### **Supplemental Table 1**
+<a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/blob/main/NCBI/SARS-CoV-2%20NCBI"> SARS-CoV-2 NCBI Information
 
 ## **Phylogenetic Analysis**
 ### **Installing Packages and Activating Environment**
