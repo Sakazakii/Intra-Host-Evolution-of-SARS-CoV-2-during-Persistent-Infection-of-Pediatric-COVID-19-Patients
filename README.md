@@ -5,13 +5,13 @@ David B. Williams, Arghavan Alisoltani, Egon A. Ozer, Ramon Lorenzo-Redondo, and
 
 **Table of Contents**
 
-Introduction
-Significance and Findings
-Study Design
-Dependencies
-Epidemiological Data Sets
-Phylogenetic Data Sets
-Phylogenetic Analysis
+- Introduction
+- Significance and Findings
+- Study Design
+- Dependencies
+- Epidemiological Data Sets
+- Phylogenetic Data Sets
+- Phylogenetic Analysis
 
 **Introduction**
 
@@ -23,4 +23,32 @@ Boyle et. al. 2025 (unpublished). The following data are provided:
 2. Codes (.ipynb & .r) used for the analysis of the aforementioned data sets
 
 **Significance and Findings**
+Pediatric patients, especially immunocompromised, exhibit sustained PCR positivity with SARS-CoV-2.
 
+Persistent SARS-CoV-2 positivity generates immune espacape and antiviral resistance non-synonymous mutations.
+
+**Study Design**
+Through a single center retrospective cohort study, we examined the SARS-CoV-2 genetic diversity over a 3-year period in Chicago, Illinois, USA. Between 2020 to 2023, clinical metadata of 20 patient encounters were captured through Ann and Robert H. Lurie Children's Hospital. From March 22nd 2020 to March 22nd 2023, 11,783 residual diagnostic swabs were collected from SARS-CoV-2-positive patients, of which 50 were successfully utilized for SARS-CoV-2 whole-genome sequencing.
+
+**Dependencies**
+
+**Python Dependencies**
+
+**R Dependencies**
+- tabplot
+- readxl (v.1.4.3)
+- dplyr (v.1.1.2)
+- lubridate (v.1.9.2)
+- ggplot2 v3.5.1
+- tidyr (v.1.3.0)
+- treeio
+- ggtree
+- ape
+- ggtreeExtra
+- ggplot2
+- ggsci
+- TreeTools (v.1.10.0)
+- phylotools (v.1.9-16)
+- MAFFT v7.453
+- scorpio v0.3.12
+- IQ-Tree v2.0.5
