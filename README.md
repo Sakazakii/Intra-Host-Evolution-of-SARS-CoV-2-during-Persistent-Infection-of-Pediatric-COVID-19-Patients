@@ -110,9 +110,9 @@ treetime --tree xxx.tre --aln xxx.mafft.fasta --dates seqs/dates.csv --outdir tr
 
 ## **Shannon Entropy Data Sets**
 ### **Figures 3 & 4 and Supplemental Figure 1 and Supplemental Table 2**
-<a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/blob/main/Sh%20Variant%20Files"> Immunocompetent Host CSV </a>
+<a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/blob/main/Sh%20Variant%20Files"> Shannon Entropy Variant Files </a>
 
-<a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/blob/main/Sh%20Variant%20Files"> Immunocompetent Host CSV </a>
+<a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/blob/main/Sh%20samtools_depth%20files"> Shannon Entropy samtools_depth files </a>
 
 ## **Shannon Entropy Analysis**
 ### **Load Libraries in R Studio**
