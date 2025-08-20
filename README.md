@@ -11,7 +11,8 @@ David B. Williams, Arghavan Alisoltani, Egon A. Ozer, Ramon Lorenzo-Redondo, and
 ### [5. Epidemiological Data Sets](#epidemiological-data-sets)
 ### [6. Phylogenetic Data Sets](#phylogenetic-data-sets)
 ### [7. Phylogenetic Analysis](#phylogenetic-analysis)
-### [8. Shannon Entropy Analysis](#shannon-entropy-analysis)
+### [8. Shannon Entropy Data Sets](#shannon-entropy-data-sets)
+### [9. Shannon Entropy Analysis](#shannon-entropy-analysis)
 
 ## **Introduction**
 
@@ -106,6 +107,12 @@ fasttree -nt -gtr -gamma xxx.mafft.fasta > xxx.tre
 ```
 treetime --tree xxx.tre --aln xxx.mafft.fasta --dates seqs/dates.csv --outdir treetime
 ```
+
+## **Shannon Entropy Data Sets**
+### **Figures 3 & 4 and Supplemental Figure 1 and Supplemental Table 2**
+<a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/blob/main/Sh%20Variant%20Files"> Immunocompetent Host CSV </a>
+
+<a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/blob/main/Sh%20Variant%20Files"> Immunocompetent Host CSV </a>
 
 ## **Shannon Entropy Analysis**
 ### **Load Libraries in R Studio**
