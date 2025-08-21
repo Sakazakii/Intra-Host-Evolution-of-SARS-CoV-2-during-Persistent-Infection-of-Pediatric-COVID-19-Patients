@@ -58,15 +58,14 @@ Through a single center retrospective cohort study, we examined the SARS-CoV-2 g
 - IQ-Tree (v2.0.5)
 - fasttree (v2.1.10)
 - treetime (v.0.11.4)
-- tidyverse
+- tidyverse (v.2.0.0)
 - lmerTest (v3.1-3)
 - emmeans (v1.11.2)
-- patchwork
-- glmmTMB
-- magrittr
-- gggenes
-- ggeffects
-- ComplexHeatmap
+- patchwork (v1.3.1)
+- glmmTMB (v1.1.11)
+- magrittr (v2.0.3)
+- gggenes (v0.5.1)
+- ggeffects (v2.3.0)
 
 ## **Epidemiological Data Sets**
 ### **Figures 1 & 2**
