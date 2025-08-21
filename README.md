@@ -44,7 +44,7 @@ Through a single center retrospective cohort study, we examined the SARS-CoV-2 g
 - readxl (v.1.4.3)
 - dplyr (v.4.4.0)
 - lubridate (v.1.9.2)
-- ggplot2 (v3.5.1)
+- ggplot2 (v3.5.2)
 - tidyr (v.1.3.0)
 - ggtree (v3.14.0)
 - ape (v.5.8)
@@ -59,8 +59,8 @@ Through a single center retrospective cohort study, we examined the SARS-CoV-2 g
 - fasttree (v2.1.10)
 - treetime (v.0.11.4)
 - tidyverse
-- lme4
-- emmeans
+- lmerTest (v3.1-3)
+- emmeans (v1.11.2)
 - patchwork
 - glmmTMB
 - magrittr
