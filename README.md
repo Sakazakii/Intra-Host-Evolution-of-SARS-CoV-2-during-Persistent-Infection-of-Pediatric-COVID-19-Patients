@@ -13,6 +13,7 @@ David B. Williams, Arghavan Alisoltani, Egon A. Ozer, Ramon Lorenzo-Redondo, and
 ### [7. Phylogenetic Analysis](#phylogenetic-analysis)
 ### [8. Shannon Entropy Data Sets](#shannon-entropy-data-sets)
 ### [9. Shannon Entropy Analysis](#shannon-entropy-analysis)
+### [10. Supplemental Table 2](supplemental-table-2)
 
 ## **Introduction**
 
@@ -603,3 +604,6 @@ freq_data_filtered_timepoint <- freq_data[, {
   saveRDS(pvals, file = "xxx.Rds")
 
 ```
+
+## **Supplemental Table 2**
+<a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/tree/main/Supplemental%20Table%202"> Supplemental Table 2 </a>
