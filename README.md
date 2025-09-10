@@ -343,30 +343,234 @@ freq_data_filtered <- freq_data[, {
 
 ```{r}
 
-# After all the filtering, if a POS is retained and ALT_FREQ is NA, that POS matches the reference -> ALT_FREQ = 0
-  freq_data_filtered[is.na(ALT_FREQ), ALT_FREQ := 0]
+#' Calculate Shannon entropy
+#'
+#' @param frequencies A vector of nucleotide frequencies
+#'
+#' @return A numerical Shannon entropy value
+#' @export
+calculate_shannon <- function(frequencies) {
+  # If frequencies don't sum to 1, calculate reference frequency
+  if (sum(frequencies) < 1) {
+    ref <- 1 - sum(frequencies)
+    
+    # Add reference frequency to list of frequencies
+    frequencies %<>% c(ref)
+  }
   
-# Retain only POS where at least one time point at any patient has ALT_FREQ >= 0.03 
-  freq_data_filtered <-  freq_data_filtered[, if (any(ALT_FREQ >= 0.03, na.rm = TRUE)) .SD, by = POS]
+  # Calculate shannon entropy
+  se <- -sum(frequencies * log2(frequencies))
+  
+  return(se)
+}
 
-# Calculate shannon entropy
-  shannon_data <- freq_data_filtered[, 
-                            shannon_entropy := calculate_shannon(ALT_FREQ), 
-                            by = c("POS",
-                                   "sample_ID"
-                                   )]
+#' Assign position to feature in SARS-CoV-2 genome
+#'
+#' @param POS a numerical genome position
+#' @param anno_db a data frame containing at least the following columns: start, end, gene, feature
+#'
+#' @return
+#' @export
+assign_feature <- function(pos_val, anno_db) {
+  x <- anno_db[start <= pos_val & end >= pos_val, feature]
+  if (length(x) == 0) x <- NA
+  return(x)
+}
+
+
+#' Generate a linear mixed effect model or lm if lme4 triggers errors
+#'
+#' @param df a data frame containing all variables specified in other arguments
+#' @param y character string specifying outcome variable
+#' @param predictors a character vector specifying predictor variables
+#' @param random character string specifying random effect variables
+#' @param add_RDV logical, whether to add RDV as predictor
+#'
+#' @return an lme4 or lm class object
+#' @export
+generate_model <- function(df, 
+                           y,
+                           predictors,
+                           interaction=NULL,
+                           random = NULL) {
   
-# Replace shannon entropy that is NA to 0
-  shannon_data[is.na(shannon_entropy), shannon_entropy := 0]
+  # If a predictor var is a character type...
+  cols <- predictors[lapply(df[, ..predictors], is.character) %>% unlist()]
   
-# If a POS has >=2 ALT, it will show as duplicate. Remove one row 
-  shannon_data <- unique(shannon_data, by = c("sample_ID", "POS"))
+    # ...convert into factor
+    df %<>% .[, (cols) := lapply(.SD, as.factor),
+       .SDcols = cols]
   
-# Save data
-  write_csv(shannon_data,
-            file = "xxx.csv")
+  # Generate formula
+  formula <- create_formula(y = y,
+                            predictors = c(predictors,interaction),
+                            random = random)
   
-  saveRDS(shannon_data, file = "xxx.Rds")
+  # Define safe functions for error handling
+  possibly_lme4 <- possibly(\(x) lmerTest::lmer(formula, data = x))
+  
+  possibly_lm <- possibly(\(x) lm(create_formula(y = y,
+                                                 predictors = predictors), 
+                                  data = x))
+  # Generate model
+  model <- df |> possibly_lme4()
+  
+  # If no output from lme4, try lm
+  if (is.null(model)) {
+    model <- df |> possibly_lm()
+  }
+  
+  return(model)
+}
+
+#' Helper function to generate QQ plot for model
+#'
+#' @param model A lm or lmer class object
+#' @param title Character string for title to print on plot
+#'
+#' @return a base R QQ plot
+#' @export
+assess_QQ_plot <- function(model,
+                           title) {
+  par(mfrow = c(1, 1))
+  qqnorm(resid(model), main = title)
+  qqline(resid(model), col = "dodgerblue", lwd = 2)
+}
+
+#' Save a ggplot
+#'
+#' @param plot ggplot object
+#' @param filename path for saving plot 
+#'
+#' @return saves plot at filename
+#' @export
+save_plot <- function(plot, filename) {
+  # Determine dimensions for saving
+  out <- ggplot_build(plot)
+  
+  # Scale plot dimensions according to rows and columns of plot
+  ggsave(filename, 
+         plot,
+         width = 800 * max(out$layout$layout$COL),
+         height = 600 * max(out$layout$layout$ROW),
+         scale = c(3:1)[max(out$layout$layout$ROW)],
+         units = "px")
+}
+
+#' Generate scatter plot with SARS-CoV-2 genome annotation
+#'
+#' @param df a data frame containing all variables listed in x, y, color, facet_var
+#' @param x character string specifying X axis variable
+#' @param y character string specifying Y axis variable
+#' @param color character string specifying variable to use to color points
+#' @param facet_var character string specifying variable to use to facet plots
+#' @param xlab character string specifying X axis title
+#' @param ylab character string specifying Y axis title
+#' @param color_lab character string specifying label for color legend
+#' @param title character string specifying plot title
+#' @param anno a data frame containing at least the following columns: start, end, gene
+#'
+#' @return a ggplot object
+#' @export
+scatter_plot_with_genome <- function(df,
+                                     x,
+                                     y,
+                                     color,
+                                     facet_var,
+                                     xlab,
+                                     ylab,
+                                     color_lab = color,
+                                     title = element_blank(),
+                                     anno = NULL) {
+  ggplot(df, 
+         mapping = aes(x = .data[[x]], 
+                       y = .data[[y]],
+                       color = .data[[color]])) +
+    geom_point() +
+    theme_bw() +
+    facet_wrap(vars(.data[[facet_var]])) +
+    geom_gene_arrow(data = anno,
+                    aes(xmin = start, 
+                        xmax = end, 
+                        y = -0.05,
+                        fill = gene),
+                    arrowhead_height = unit(1, "char"), 
+                    arrow_body_height = unit(1, "char"),
+                    arrowhead_width = unit(0, "char"),
+                    inherit.aes = F) +
+    scale_fill_paletteer_d(palette) +
+    geom_gene_label(data = anno,
+                    aes(xmin = start, 
+                        xmax = end, 
+                        y = -0.05 , 
+                        label = gene),
+                    inherit.aes = F,
+                    align = "centre",
+                    grow = T) +
+    labs(x = xlab,
+         y = ylab,
+         title = title,
+         color = color_lab) -> plot
+  
+  return(plot)
+}
+
+#' Generate and save multiple plots generated with scatter_plot_with_genome()
+#'
+#' @param df a data frame containing all variables listed in x, y, color, facet_var
+#' @param plot_var a character string specifying variable to split df by for separate plots
+#' @param save_path path to save generated figures
+#' @param x character string specifying X axis variable
+#' @param y character string specifying Y axis variable
+#' @param color character string specifying variable to use to color points
+#' @param facet_var character string specifying variable to use to facet plots
+#' @param xlab character string specifying X axis title
+#' @param ylab character string specifying Y axis title
+#' @param color_lab character string specifying label for color legend
+#' @param title character string specifying plot title
+#' @param anno a data frame containing at least the following columns: start, end, gene
+#'
+#' @return saved plots at save_path
+#' @export
+make_and_save_scatter_plots <- function(df, 
+                                        plot_var,
+                                        save_path = "plots/",
+                                        x,
+                                        y,
+                                        color,
+                                        facet_var,
+                                        xlab,
+                                        ylab,
+                                        color_lab,
+                                        anno = anno_db_gene) {
+  
+  # Split data frames by variable
+  df %<>% split(f = .[[plot_var]])
+  
+  # Get title names
+  title <- names(df)
+  
+  # Generate plots
+  list(df, title) |> 
+    purrr::pmap(\(d, t) scatter_plot_with_genome(d, 
+                                                 x = x,
+                                                 y = y,
+                                                 color = color,
+                                                 facet_var = facet_var,
+                                                 xlab = xlab,
+                                                 ylab = ylab, 
+                                                 color_lab = color_lab,
+                                                 title = t,
+                                                 anno = anno)) -> plots
+  
+  # Generate save file names
+  filenames <- paste(save_path, title, ".png", sep = "")
+  
+  # Save plots
+  list(plots, filenames) |> 
+    purrr::pmap(\(plot, filename) save_plot(plot, filename))
+  
+}
 ```
 
 ## **Depth fiter for only comparing across time points within each participants**
