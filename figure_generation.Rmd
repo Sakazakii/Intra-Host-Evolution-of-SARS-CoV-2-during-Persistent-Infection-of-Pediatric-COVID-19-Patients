@@ -1,0 +1,318 @@
+---
+title: "figure_generation"
+output: html_document
+date: "2025-07-18"
+---
+
+```{r setup, include=FALSE}
+# Load libraries
+  libraries <- c("tidyverse",
+                 "magrittr",
+                 "data.table",
+                 "paletteer",
+                 "gggenes",
+                 "patchwork",
+                 "lme4",
+                 "ggeffects")
+    
+  suppressPackageStartupMessages(
+    lapply(libraries, 
+           require, 
+           character.only = TRUE))
+```
+
+# Load data for plotting
+
+## Load genome annotation 
+
+1) Load genome annotation file
+2) Order variables for proper plotting
+3) Create amended annotation listing only gene names for plotting
+
+```{r}
+
+# Load genome annotation
+  file <- "./reference/SARS-CoV-2_genome_annotation_NC_045512(2).csv"
+  anno_db <- fread(file)
+  
+# Format factor variable for correct plotting order
+  anno_db$gene %<>% factor(., levels = unique(.))
+  anno_db$feature %<>% factor(., levels = .)
+  
+# Create amended anno_db with genes only for plotting
+  anno_db_gene <- anno_db[, .(start = min(start),
+                              end = max(end)),
+                          by = gene]
+
+```
+
+## Set color scheme
+
+```{r}
+
+# Set color palette
+  palette <- "wesanderson::Moonrise2"
+  options(ggplot2.discrete.colour = paletteer_d(palette))
+
+```
+
+# Generate figures for paper
+
+## Plot nucleotide frequency and shannon entropy by immune status
+
+Two scatter plots showing nucleotide frequency and shannon entropy across the entire genome, combining all timepoints. 
+
+```{r}
+
+# Load nucleotide frequency file 
+  freq_data <- fread("filtered_data/COVID_LCH_all_freq_data.csv")
+
+# Only include alternate allele with total depth > 400
+  freq_data <- freq_data[TOTAL_DP > 400]
+  
+# Nucleotide frequency, each dot represents an alternate allele with ALT_FREQ > 0.03
+  nonzero_freq_data <- freq_data[ALT_FREQ != 0]
+  
+  p1 <- scatter_plot_with_genome(nonzero_freq_data,
+                                 x = "POS",
+                                 y = "ALT_FREQ",
+                                 color = "ALT",
+                                 facet_var = "immune_status",
+                                 xlab = element_blank(),
+                                 ylab = "Nucleotide frequency",
+                                 color_lab = "Nucleotide",
+                                 anno = anno_db_gene)
+
+  
+# Shannon entropy
+  shannon_data <- freq_data[, 
+                            shannon_entropy := calculate_shannon(ALT_FREQ), 
+                            by = c("POS",
+                                   "sample_ID"
+                                   )]
+# Only show position with positive shannon entropy values
+  nonzero_shannon_data <- shannon_data[shannon_entropy != 0]
+  
+# If a POS has >=2 ALT, it will show as duplicate. Remove one row 
+  shannon_data <- unique(shannon_data, by = c("sample_ID", "POS"))
+
+  p2 <- scatter_plot_with_genome(nonzero_shannon_data,
+                                 x = "POS",
+                                 y = "shannon_entropy",
+                                 color = "immune_status",
+                                 facet_var = "immune_status",
+                                 xlab = "Genome position",
+                                 ylab = "Shannon entropy",
+                                 color_lab = "Immune status",
+                                 anno = anno_db_gene)
+  
+# Combine plots
+  plot <- p1 / p2
+
+# Save plot
+  file <- "filtered_plots/nucleotide_frequency_shannon_entropy_scatter_plots_by_immune_status_400"
+  ratio <- list(width = 4, height = 3)
+  scale <- 2.5
+  
+  # Save as .tif
+  ggsave(paste0(file, ".tif"), 
+         plot,
+         width = ratio$width,
+         height = ratio$height,
+         scale = scale,
+         units = "in")
+  
+  # Save as PDF (run in command line)
+  pdf(file = paste0(file, ".pdf"),
+      width = ratio$width*scale,
+      height = ratio$height*scale)
+  
+  plot(plot)
+  dev.off()
+
+```
+## Plot shannon entropy as box plot per participant 
+
+Box plots showing shannon entropy of any non-zero position at any point in the genome. Separate boxes per time point, faceted by participant ID (MRN).
+
+```{r}
+
+# Generate box plots
+  shannon_data_timepoint<-fread("filtered_data/COVID_LCH_shannon_data_timepoint.csv")
+  shannon_data_timepoint <- shannon_data_timepoint[ALT_FREQ >= 0.03]
+
+  plot <- ggplot(data = shannon_data_timepoint,
+                 aes(x = factor(Days),
+                     y = shannon_entropy,
+                     color = immune_status,
+                     group = Days)) +
+      geom_boxplot(outlier.shape = NA) +
+      ggbeeswarm::geom_quasirandom(shape = 21,
+                                   width = .3, 
+                                   dodge.width = 0.75,
+                                   aes(fill = immune_status)) +
+  scale_fill_paletteer_d(palette) +
+    theme_bw() +
+    labs(x = "Days since first positive SARS-CoV-2 test",
+         y = "Shannon entropy",
+         color = "Immune status") +
+    facet_wrap(vars(MRN), scales = "free_x", nrow = 3) +
+    guides(fill = "none")
+      
+
+# Save plot
+  file <- "filtered_plots/shannon_entropy_boxplots_by_participant_timepoint3"
+  ratio <- list(width = 9, height = 5)
+  scale <- 1.25
+  
+  # Save as .tif
+  ggsave(paste0(file, ".tif"), 
+         plot,
+         width = ratio$width,
+         height = ratio$height,
+         scale = scale,
+         units = "in")
+  
+  # Save as PDF (run in command line)
+  pdf(file = paste0(file, ".pdf"),
+      width = ratio$width*scale,
+      height = ratio$height*scale)
+  
+  plot(plot)
+  dev.off()
+
+```
+
+## Plot whole genome Shannon entropy over time
+
+Line plot showing whole genome Shannon entropy (summed over each position) over time. Each dot represents one sample, samples from the same participant are connected by lines. Fitted curves are estimated marginal means of model. 
+
+```{r}
+
+# Load whole genome shannon entropy values
+  wg_df <- readRDS("filtered_models/whole_genome_shannon_entropy_new.Rds")
+
+
+# Generate line plot
+  plot <- ggplot(data = wg_df, 
+         aes(x = Days, 
+             y = total_entropy,
+             group = MRN,
+             color = immune_status)) +
+    geom_point(shape = 21,
+               size = 3) +
+    geom_line() +
+    theme_bw() +
+    labs(color = "Immune status",
+         x = "Days since first positive SARS-CoV-2 test",
+         y = "Total Shannon entropy")
+    
+  
+# Get estimated marginal means for plotting
+  model <- generate_model(wg_df,
+                          y = "total_entropy",
+                          predictors = c("immune_status",
+                                         "Days",
+                                         "Ct",
+                                         "RDV"),
+                          random = "MRN")
+  
+  pred <- ggpredict(model, c("Days", "immune_status"), 
+                    type = "fixed",
+                    ci.lvl = 0.95)
+   
+   # Set color scale
+   cols <- paletteer_d(palette)[1:2]
+   names(cols) <- levels(wg_df$immune_status)
+   
+# Add predicted lines to plot
+   plot <- plot +
+   geom_ribbon(inherit.aes = F, 
+                  data = pred, 
+                  aes(x = x, ymin = pred$conf.low, ymax = pred$conf.high, fill = group),
+                  alpha = 0.3,
+               show.legend = F) +
+      geom_line(inherit.aes = F, 
+                data = pred, 
+                aes(x = x, y = predicted, color = group),
+                linewidth = 1.5) +
+    scale_color_manual(values = cols) +
+    scale_fill_manual(values = cols) 
+   
+# Save plot
+  file <- "filtered_plots/shannon_entropy_whole_genome_line_plot_timepoint7"
+  ratio <- list(width = 9, height = 5)
+  scale <- 1
+  
+  # Save as .tif
+  ggsave(paste0(file, ".tif"), 
+         plot,
+         width = ratio$width,
+         height = ratio$height,
+         scale = scale,
+         units = "in")
+  
+  # Save as PDF (run in command line)
+  pdf(file = paste0(file, ".pdf"),
+      width = ratio$width*scale,
+      height = ratio$height*scale)
+  
+  plot(plot)
+  dev.off()
+
+ 
+```
+
+## Plot Shannon entropy by genome feature
+
+Box plots showing total shannon entropy across all positions within each gene, one point per sample. 
+
+```{r}
+
+# Load shannon entropy by gene
+  gene_df <- readRDS("filtered_data/COVID_LCH_per_gene_Shannon_entropy.Rds")
+
+  
+# Plot shannon entropy boxplots by feature
+  plot <- ggplot(data = gene_df,
+                 aes(x = feature,
+                     y = log(total_entropy+ 1),
+                     color = immune_status)) +
+      geom_boxplot(outlier.shape = NA) +
+      ggbeeswarm::geom_quasirandom(shape = 21,
+                                   width = .2, 
+                                   dodge.width = 0.75,
+                                   aes(fill = immune_status)) +
+    scale_fill_paletteer_d(palette) +
+    theme_bw() +
+    labs(y = " Total Shannon entropy",
+         color = "Immune status") +
+    theme(axis.title.x = element_blank()) +
+    guides(fill = "none")
+
+  
+# Save plot
+  file <- "filtered_plots/shannon_entropy_boxplots_by_gene"
+  ratio <- list(width = 2, height = 1)
+  scale <- 6
+  
+  # Save as .tif
+  ggsave(paste0(file, ".tif"), 
+         plot,
+         width = ratio$width,
+         height = ratio$height,
+         scale = scale,
+         units = "in")
+  
+  # Save as PDF (run in command line)
+  pdf(file = paste0(file, ".pdf"),
+      width = ratio$width*scale,
+      height = ratio$height*scale)
+  
+  plot(plot)
+  dev.off()
+  
+
+
+```
+
