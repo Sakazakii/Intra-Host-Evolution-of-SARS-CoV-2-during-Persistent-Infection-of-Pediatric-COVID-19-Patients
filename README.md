@@ -115,6 +115,9 @@ treetime --tree xxx.tre --aln xxx.mafft.fasta --dates seqs/dates.csv --outdir tr
 <a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/blob/main/Sh%20samtools_depth%20files"> Shannon Entropy samtools_depth files </a>
 
 ## **Shannon Entropy Analysis**
+### **Functions**
+<a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/blob/main/figure_generation.Rmd"> Functions </a>
+
 ### **Load Libraries in R Studio**
 ```{r setup, include=TRUE, echo=FALSE}
 # Set working directory
