@@ -141,6 +141,7 @@ treetime --tree xxx.tre --aln xxx.mafft.fasta --dates seqs/dates.csv --outdir tr
 3) Select only substitution mutations (drop insertion/deletion data)
 
 ```{r}
+  dataDir <- "xxx/xxxx"
 
 # Specify pattern to search for iVar output files
   pattern <- "variants.tsv"
@@ -178,7 +179,7 @@ treetime --tree xxx.tre --aln xxx.mafft.fasta --dates seqs/dates.csv --outdir tr
 
 ### **Aggregate & Format samtools Depth Data**
 ```{r}
-  dataDir <- "new_depth"
+  dataDir <- "xxx"
 
 # Specify pattern to search for iVar output files
   pattern <- "depth.txt"
@@ -265,6 +266,24 @@ treetime --tree xxx.tre --aln xxx.mafft.fasta --dates seqs/dates.csv --outdir tr
                       "No") %>% 
         as.factor()]
 ```
+## **Determine genome region for each data entry**
+
+1) Apply assign_feature() function to each POS value
+2) Order "feature" factor to ensure proper plotting order
+
+```{r}
+
+# Load manually edited anno_db 
+  anno_db <- fread("reference/SARS-CoV-2_genome_annotation_NC_045512(2).csv")
+
+# Assign genome region
+  freq_data %<>% 
+    .[, feature := sapply(POS, assign_feature, anno_db = anno_db)]
+  
+# Order features as factor for proper plotting
+  freq_data %<>% 
+    .[, feature := factor(feature, levels = anno_db$feature)]
+```
 
 ## **Total_Depth Filter**
 
@@ -288,7 +307,7 @@ treetime --tree xxx.tre --aln xxx.mafft.fasta --dates seqs/dates.csv --outdir tr
 ## **Depth fiter for comparing across time points and between immune status**
 
 1) Grouping by POS
-2) Find the smallest total_depth > 400
+2) Find the smallest total_depth > 200
 3) Compute a lower bound as 90% of that value
 4) Check if all POS in that group greater than or equal to this lower bound. If not discard the group
 ```{r}
@@ -319,240 +338,36 @@ freq_data_filtered <- freq_data[, {
   saveRDS(freq_data_filtered, file = "xxx.Rds")
 
 ```
-## **Calculate Shannon entropy for comparing across time points and between immune status**
+# **Calculate Shannon entropy for comparing across time points and between immune status**
 
 1) Apply function calculate_shannon() per position and sample
 
 ```{r}
 
-#' Calculate Shannon entropy
-#'
-#' @param frequencies A vector of nucleotide frequencies
-#'
-#' @return A numerical Shannon entropy value
-#' @export
-calculate_shannon <- function(frequencies) {
-  # If frequencies don't sum to 1, calculate reference frequency
-  if (sum(frequencies) < 1) {
-    ref <- 1 - sum(frequencies)
-    
-    # Add reference frequency to list of frequencies
-    frequencies %<>% c(ref)
-  }
+# After all the filtering, if a POS is retained and ALT_FREQ is NA, that POS matches the reference -> ALT_FREQ = 0
+  freq_data_filtered[is.na(ALT_FREQ), ALT_FREQ := 0]
   
-  # Calculate shannon entropy
-  se <- -sum(frequencies * log2(frequencies))
-  
-  return(se)
-}
+# Retain only POS where at least one time point at any patient has ALT_FREQ >= 0.03 
+  freq_data_filtered <-  freq_data_filtered[, if (any(ALT_FREQ >= 0.03, na.rm = TRUE)) .SD, by = POS]
 
-#' Assign position to feature in SARS-CoV-2 genome
-#'
-#' @param POS a numerical genome position
-#' @param anno_db a data frame containing at least the following columns: start, end, gene, feature
-#'
-#' @return
-#' @export
-assign_feature <- function(pos_val, anno_db) {
-  x <- anno_db[start <= pos_val & end >= pos_val, feature]
-  if (length(x) == 0) x <- NA
-  return(x)
-}
-
-
-#' Generate a linear mixed effect model or lm if lme4 triggers errors
-#'
-#' @param df a data frame containing all variables specified in other arguments
-#' @param y character string specifying outcome variable
-#' @param predictors a character vector specifying predictor variables
-#' @param random character string specifying random effect variables
-#' @param add_RDV logical, whether to add RDV as predictor
-#'
-#' @return an lme4 or lm class object
-#' @export
-generate_model <- function(df, 
-                           y,
-                           predictors,
-                           interaction=NULL,
-                           random = NULL) {
+# Calculate shannon entropy
+  shannon_data <- freq_data_filtered[, 
+                            shannon_entropy := calculate_shannon(ALT_FREQ), 
+                            by = c("POS",
+                                   "sample_ID"
+                                   )]
   
-  # If a predictor var is a character type...
-  cols <- predictors[lapply(df[, ..predictors], is.character) %>% unlist()]
+# Replace shannon entropy that is NA to 0
+  shannon_data[is.na(shannon_entropy), shannon_entropy := 0]
   
-    # ...convert into factor
-    df %<>% .[, (cols) := lapply(.SD, as.factor),
-       .SDcols = cols]
+# If a POS has >=2 ALT, it will show as duplicate. Remove one row 
+  shannon_data <- unique(shannon_data, by = c("sample_ID", "POS"))
   
-  # Generate formula
-  formula <- create_formula(y = y,
-                            predictors = c(predictors,interaction),
-                            random = random)
+# Save data
+  write_csv(shannon_data,
+            file = "filtered_data/COVID_LCH_shannon_data.csv")
   
-  # Define safe functions for error handling
-  possibly_lme4 <- possibly(\(x) lmerTest::lmer(formula, data = x))
-  
-  possibly_lm <- possibly(\(x) lm(create_formula(y = y,
-                                                 predictors = predictors), 
-                                  data = x))
-  # Generate model
-  model <- df |> possibly_lme4()
-  
-  # If no output from lme4, try lm
-  if (is.null(model)) {
-    model <- df |> possibly_lm()
-  }
-  
-  return(model)
-}
-
-#' Helper function to generate QQ plot for model
-#'
-#' @param model A lm or lmer class object
-#' @param title Character string for title to print on plot
-#'
-#' @return a base R QQ plot
-#' @export
-assess_QQ_plot <- function(model,
-                           title) {
-  par(mfrow = c(1, 1))
-  qqnorm(resid(model), main = title)
-  qqline(resid(model), col = "dodgerblue", lwd = 2)
-}
-
-#' Save a ggplot
-#'
-#' @param plot ggplot object
-#' @param filename path for saving plot 
-#'
-#' @return saves plot at filename
-#' @export
-save_plot <- function(plot, filename) {
-  # Determine dimensions for saving
-  out <- ggplot_build(plot)
-  
-  # Scale plot dimensions according to rows and columns of plot
-  ggsave(filename, 
-         plot,
-         width = 800 * max(out$layout$layout$COL),
-         height = 600 * max(out$layout$layout$ROW),
-         scale = c(3:1)[max(out$layout$layout$ROW)],
-         units = "px")
-}
-
-#' Generate scatter plot with SARS-CoV-2 genome annotation
-#'
-#' @param df a data frame containing all variables listed in x, y, color, facet_var
-#' @param x character string specifying X axis variable
-#' @param y character string specifying Y axis variable
-#' @param color character string specifying variable to use to color points
-#' @param facet_var character string specifying variable to use to facet plots
-#' @param xlab character string specifying X axis title
-#' @param ylab character string specifying Y axis title
-#' @param color_lab character string specifying label for color legend
-#' @param title character string specifying plot title
-#' @param anno a data frame containing at least the following columns: start, end, gene
-#'
-#' @return a ggplot object
-#' @export
-scatter_plot_with_genome <- function(df,
-                                     x,
-                                     y,
-                                     color,
-                                     facet_var,
-                                     xlab,
-                                     ylab,
-                                     color_lab = color,
-                                     title = element_blank(),
-                                     anno = NULL) {
-  ggplot(df, 
-         mapping = aes(x = .data[[x]], 
-                       y = .data[[y]],
-                       color = .data[[color]])) +
-    geom_point() +
-    theme_bw() +
-    facet_wrap(vars(.data[[facet_var]])) +
-    geom_gene_arrow(data = anno,
-                    aes(xmin = start, 
-                        xmax = end, 
-                        y = -0.05,
-                        fill = gene),
-                    arrowhead_height = unit(1, "char"), 
-                    arrow_body_height = unit(1, "char"),
-                    arrowhead_width = unit(0, "char"),
-                    inherit.aes = F) +
-    scale_fill_paletteer_d(palette) +
-    geom_gene_label(data = anno,
-                    aes(xmin = start, 
-                        xmax = end, 
-                        y = -0.05 , 
-                        label = gene),
-                    inherit.aes = F,
-                    align = "centre",
-                    grow = T) +
-    labs(x = xlab,
-         y = ylab,
-         title = title,
-         color = color_lab) -> plot
-  
-  return(plot)
-}
-
-#' Generate and save multiple plots generated with scatter_plot_with_genome()
-#'
-#' @param df a data frame containing all variables listed in x, y, color, facet_var
-#' @param plot_var a character string specifying variable to split df by for separate plots
-#' @param save_path path to save generated figures
-#' @param x character string specifying X axis variable
-#' @param y character string specifying Y axis variable
-#' @param color character string specifying variable to use to color points
-#' @param facet_var character string specifying variable to use to facet plots
-#' @param xlab character string specifying X axis title
-#' @param ylab character string specifying Y axis title
-#' @param color_lab character string specifying label for color legend
-#' @param title character string specifying plot title
-#' @param anno a data frame containing at least the following columns: start, end, gene
-#'
-#' @return saved plots at save_path
-#' @export
-make_and_save_scatter_plots <- function(df, 
-                                        plot_var,
-                                        save_path = "plots/",
-                                        x,
-                                        y,
-                                        color,
-                                        facet_var,
-                                        xlab,
-                                        ylab,
-                                        color_lab,
-                                        anno = anno_db_gene) {
-  
-  # Split data frames by variable
-  df %<>% split(f = .[[plot_var]])
-  
-  # Get title names
-  title <- names(df)
-  
-  # Generate plots
-  list(df, title) |> 
-    purrr::pmap(\(d, t) scatter_plot_with_genome(d, 
-                                                 x = x,
-                                                 y = y,
-                                                 color = color,
-                                                 facet_var = facet_var,
-                                                 xlab = xlab,
-                                                 ylab = ylab, 
-                                                 color_lab = color_lab,
-                                                 title = t,
-                                                 anno = anno)) -> plots
-  
-  # Generate save file names
-  filenames <- paste(save_path, title, ".png", sep = "")
-  
-  # Save plots
-  list(plots, filenames) |> 
-    purrr::pmap(\(plot, filename) save_plot(plot, filename))
-  
-}
+  saveRDS(shannon_data, file = "filtered_data/COVID_LCH_shannon_data.Rds")
 ```
 
 ## **Depth fiter for only comparing across time points within each participants**
@@ -643,50 +458,26 @@ freq_data_filtered_timepoint <- freq_data[, {
   
 # Save data set
   write_csv(wg_df,
-            file = "xxx.csv")
+            file = "filtered_data/COVID_LCH_whole_genome_Shannon_entropy.csv")
   
-  saveRDS(wg_df, file = "xxx.Rds")
-  
-# For the purpose of looking at whole genome shannon entropy changes across timepoints and not between immune status, use shannon_data_timepoint
-  
-  wg_df_timepoint <- shannon_data_timepoint[, .(total_entropy = sum(shannon_entropy)), by = keep]
-  
-# Save data set
-  write_csv(wg_df_timepoint,
-            file = "xxx.csv")
-  
-  saveRDS(wg_df_timepoint, file = "xxx.Rds")
+  saveRDS(wg_df, file = "filtered_data/COVID_LCH_whole_genome_Shannon_entropy.Rds")
   
   
 # Check linearity of associations
   ggplot(wg_df, 
          aes(x = Days,
-             y = total_entropy)) + 
+             y = log(total_entropy))) + 
     geom_point() -> p1
   
-  ggplot(wg_df,
-         aes(x = log(Days + 1),
-             y = log(total_entropy + 0.01))) +
-    geom_point() -> p2
-  
-  p1 | p2
-  
-  ggplot(wg_df, 
-         aes(x = Ct,
-             y = log(total_entropy + 0.01))) + geom_point()
-  
 # Run model 
-  model <- lme4::lmer(log(total_entropy + 0.01) ~ immune_status + Ct + log(Days + 1) + (1|MRN), data = wg_df)
+  model <- lmer(log(total_entropy) ~ Ct + RDV + immune_status * Days + (1|MRN), data = wg_df)
   
 # QQ plot
   qqnorm(resid(model))
   qqline(resid(model), col = "dodgerblue", lwd = 2)
-
-# Check significance of immune status
-  pairs(emmeans(model, ~ immune_status, data = wg_df))
   
 # Save model
-  saveRDS(model, file = "xxx.Rds")
+  saveRDS(model, file = "filtered_models/xxxx.Rds")
 
 ```
 
@@ -714,14 +505,14 @@ freq_data_filtered_timepoint <- freq_data[, {
     unique()
   
 # Set order of features 
-  anno_db <- fread("xxx.csv")
+  anno_db <- fread("reference/SARS-CoV-2_genome_annotation_NC_045512(2).csv")
   gene_df$feature %<>% factor(., levels = anno_db$feature) %>% droplevels()
   
 # Save data set
   write_csv(gene_df,
-            file = "xxx.csv")
+            file = "filtered_data/xxxx.csv")
   
-  saveRDS(gene_df, file = "xxx.Rds")
+  saveRDS(gene_df, file = "filtered_data/xxxx.Rds")
  
 ```
 
@@ -744,13 +535,6 @@ freq_data_filtered_timepoint <- freq_data[, {
     geom_jitter() +
     facet_wrap(vars(feature), nrow = 4)
 
-  ggplot(gene_df, 
-         aes(x = log(Days + 1),
-             y = log(total_entropy + 0.01),
-             color = immune_status)) + 
-    geom_point() + 
-    geom_jitter() +
-    facet_wrap(vars(feature), nrow = 4)
 
   ggplot(gene_df, 
          aes(x = Ct,
@@ -759,35 +543,40 @@ freq_data_filtered_timepoint <- freq_data[, {
     geom_point() +
     geom_jitter() +
     facet_wrap(vars(feature), nrow = 4)
+
+# Remove genes that all gene-entropy values is 0
+  nonzero_gene_df <- gene_df[, if (sum(total_entropy, na.rm = TRUE) != 0) .SD, by = feature]
   
-  gene_df[["log(Days + 1)"]] <- log(gene_df$Days + 1)
+# drop empty groups
+  nonzero_gene_df[, feature := droplevels(feature)]
   
 # Split data set by gene
-  df_list <- gene_df %>% split(f = .[["feature"]])
+  df_list <- nonzero_gene_df %>% split(f = .[["feature"]])
  
 # Generate models
   models <- df_list |> purrr::map(\(x) generate_model(df = x,
-                                                      y = "log(total_entropy + 0.01)",
+                                                      y = "total_entropy",
                                                       predictors = c("immune_status",
                                                                      "Ct",
-                                                                     "log(Days + 1)"),
-                                                      random = "MRN"))
+                                                                     "Days"),
+                                                      interaction = c("immune_status:Days"),
+                                                      random = "MRN",
+                                                      add_RDV = T))
   
 # Evaluate normality of residuals
   list(models, names(models)) |> 
     purrr::pmap(\(model, title) assess_QQ_plot(model, title))
   
 # Extract p-values
-  pvals <- list(models, df_list) |> 
-    purrr::pmap(\(m, d) pairwise_pval(m,
-                                      d,
-                                      var = "immune_status"))
+  pvals <- lapply(models, function(m) {
+  coef(summary(m))[5, 5]
+})
   
 # Correct p-values for multiple hypothesis testing
   pvals %<>% p.adjust(method = "fdr")
   
 # Save results
-  saveRDS(pvals, file = "xxx.Rds")
+  saveRDS(pvals, file = "filtered_models/xxxx.Rds")
 
 ```
 
