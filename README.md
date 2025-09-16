@@ -271,14 +271,14 @@ treetime --tree xxx.tre --aln xxx.mafft.fasta --dates seqs/dates.csv --outdir tr
         as.factor()]
 ```
 ### **Determine genome region for each data entry**
-<a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/blob/main/SARSCoV2_Genome_annotation.csv"> Functions </a>
+<a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/blob/main/SARSCoV2_Genome_annotation.csv"> Genome annotation file </a>
 1) Apply assign_feature() function to each POS value
 2) Order "feature" factor to ensure proper plotting order
 
 ```{r}
 
 # Load manually edited anno_db 
-  anno_db <- fread("reference/SARS-CoV-2_genome_annotation_NC_045512(2).csv")
+  anno_db <- fread("reference/xxxx.csv")
 
 # Assign genome region
   freq_data %<>% 
