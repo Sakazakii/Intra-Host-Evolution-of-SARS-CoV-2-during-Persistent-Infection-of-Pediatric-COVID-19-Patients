@@ -115,7 +115,7 @@ treetime --tree xxx.tre --aln xxx.mafft.fasta --dates seqs/dates.csv --outdir tr
 <a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/blob/main/Sh%20samtools_depth%20files"> Shannon Entropy samtools_depth files </a>
 
 ## **Shannon Entropy Analysis**
-### **Functions**
+### **Load functions**
 <a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/blob/main/figure_generation.Rmd"> Functions </a>
 
 ### **Load Libraries in R Studio**
@@ -217,7 +217,7 @@ treetime --tree xxx.tre --aln xxx.mafft.fasta --dates seqs/dates.csv --outdir tr
   freq_data <- merge(freq_data, depth_data, by = c("sample_ID", "POS"), all = TRUE)
 ```
 
-## **Merge With Patient Metadata**
+### **Merge With Patient Metadata**
 
 1) Load patient metadata
 2) Remove empty columns
@@ -247,7 +247,7 @@ treetime --tree xxx.tre --aln xxx.mafft.fasta --dates seqs/dates.csv --outdir tr
   freq_data %<>% .[, Days := Days %>% as.character() %>% as.integer()]
 ```
 
-## **Merge With Remdesivir Administration Info**
+### **Merge With Remdesivir Administration Info**
 
 1) Load file containing information on dates of treatment administration
 2) Calculate days since end of last RDV administration
@@ -269,7 +269,7 @@ treetime --tree xxx.tre --aln xxx.mafft.fasta --dates seqs/dates.csv --outdir tr
                       "No") %>% 
         as.factor()]
 ```
-## **Determine genome region for each data entry**
+### **Determine genome region for each data entry**
 
 1) Apply assign_feature() function to each POS value
 2) Order "feature" factor to ensure proper plotting order
@@ -288,7 +288,7 @@ treetime --tree xxx.tre --aln xxx.mafft.fasta --dates seqs/dates.csv --outdir tr
     .[, feature := factor(feature, levels = anno_db$feature)]
 ```
 
-## **Total_Depth Filter**
+### **Total_Depth Filter**
 
 1) Create a helper column called total_depth
 2) Copy the value from TOTAL_DP (iVar) over
@@ -307,7 +307,7 @@ treetime --tree xxx.tre --aln xxx.mafft.fasta --dates seqs/dates.csv --outdir tr
   saveRDS(freq_data, file = "xxx.Rds")
 ```
 
-## **Depth fiter for comparing across time points and between immune status**
+### **Depth fiter for comparing across time points and between immune status**
 
 1) Grouping by POS
 2) Find the smallest total_depth > 200
@@ -341,7 +341,7 @@ freq_data_filtered <- freq_data[, {
   saveRDS(freq_data_filtered, file = "xxx.Rds")
 
 ```
-# **Calculate Shannon entropy for comparing across time points and between immune status**
+### **Calculate Shannon entropy for comparing across time points and between immune status**
 
 1) Apply function calculate_shannon() per position and sample
 
@@ -373,7 +373,7 @@ freq_data_filtered <- freq_data[, {
   saveRDS(shannon_data, file = "filtered_data/COVID_LCH_shannon_data.Rds")
 ```
 
-## **Depth fiter for only comparing across time points within each participants**
+### **Depth fiter for only comparing across time points within each participants**
 
 1) Grouping by POS and MRN
 2) Find the smallest total_depth > 400
@@ -409,7 +409,7 @@ freq_data_filtered_timepoint <- freq_data[, {
 
 ```
 
-## **Calculate Shannon entropy for only comparing across time points within each participants**
+### **Calculate Shannon entropy for only comparing across time points within each participants**
 
 1) Apply function calculate_shannon() per position and sample
 
@@ -440,7 +440,7 @@ freq_data_filtered_timepoint <- freq_data[, {
   saveRDS(shannon_data_timepoint, file = "xxx.Rds")
 ```
 
-## **Whole genome Shannon entropy model**
+### **Whole genome Shannon entropy model**
 
 1) Sum Shannon entropy across whole genome per sample
 2) Check linearity of associations between predictors and outcome and transform if necessary
@@ -484,7 +484,7 @@ freq_data_filtered_timepoint <- freq_data[, {
 
 ```
 
-## **Gene Shannon entropy model**
+### **Gene Shannon entropy model**
 
 ```{r}
 
@@ -519,7 +519,7 @@ freq_data_filtered_timepoint <- freq_data[, {
  
 ```
 
-## **Run Model**
+### **Run Model**
 
 1) Check linearity of associations between predictors and outcome
 2) Split data set by gene
@@ -582,6 +582,8 @@ freq_data_filtered_timepoint <- freq_data[, {
   saveRDS(pvals, file = "filtered_models/xxxx.Rds")
 
 ```
+### **Figure generation**
+<a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/blob/main/figure_generation.Rmd"> Figure generation </a>
 
 ## **Supplemental Table 2**
 <a href="https://github.com/Sakazakii/Intra-Host-Evolution-of-SARS-CoV-2-during-Persistent-Infection-of-Pediatric-COVID-19-Patients/tree/main/Supplemental%20Table%202"> Supplemental Table 2 </a>
