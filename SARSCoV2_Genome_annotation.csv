@@ -1,0 +1,27 @@
+start,end,width,product,gene,feature
+266,805,540,leader protein,ORF1ab,nsp1
+806,2719,1914,nsp2,ORF1ab,nsp2
+2720,8554,5835,nsp3,ORF1ab,nsp3
+8555,10054,1500,nsp4,ORF1ab,nsp4
+10055,10972,918,3C-like proteinase,ORF1ab,nsp5
+10973,11842,870,nsp6,ORF1ab,nsp6
+11843,12091,249,nsp7,ORF1ab,nsp7
+12092,12685,594,nsp8,ORF1ab,nsp8
+12686,13024,339,nsp9,ORF1ab,nsp9
+13025,13441,417,nsp10,ORF1ab,nsp10
+13442,13468,27,RNA-dependent RNA polymerase,ORF1ab,nsp11
+13468,16236,2769,RNA-dependent RNA polymerase,ORF1ab,nsp12
+16237,18039,1803,helicase,ORF1ab,nsp13
+18040,19620,1581,3'-to-5' exonuclease,ORF1ab,nsp14
+19621,20658,1038,endoRNAse,ORF1ab,nsp15
+20659,21552,894,2'-O-ribose methyltransferase,ORF1ab,nsp16
+21563,25384,3822,surface glycoprotein,S,S
+25393,26220,828,ORF3a protein,ORF3a,ORF3a
+26245,26472,228,envelope protein,E,E
+26523,27191,669,membrane glycoprotein,M,M
+27202,27387,186,ORF6 protein,ORF6,ORF6
+27394,27759,366,ORF7a protein,ORF7a,ORF7a
+27756,27887,132,ORF7b,ORF7b,ORF7b
+27894,28259,366,ORF8 protein,ORF8,ORF8
+28274,29533,1260,nucleocapsid phosphoprotein,N,N
+29558,29674,117,ORF10 protein,ORF10,ORF10
