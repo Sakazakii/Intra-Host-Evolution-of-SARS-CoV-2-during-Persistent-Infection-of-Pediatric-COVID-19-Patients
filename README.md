@@ -241,24 +241,6 @@ treetime --tree xxx.tre --aln xxx.mafft.fasta --dates seqs/dates.csv --outdir tr
   
 # Make sure "Days" variable is an integer for proper plotting and modeling
   freq_data %<>% .[, Days := Days %>% as.character() %>% as.integer()]
-
-## **Determine Genome Region For Each Data Entry**
-1) Apply assign_feature() function to each POS value
-2) Order "feature" factor to ensure proper plotting order
-
-```{r}
-
-# Load manually edited anno_db 
-  anno_db <- fread("xxx.csv")
-
-# Assign genome region
-  freq_data %<>% 
-    .[, feature := sapply(POS, assign_feature, anno_db = anno_db)]
-  
-# Order features as factor for proper plotting
-  freq_data %<>% 
-    .[, feature := factor(feature, levels = anno_db$feature)]
-
 ```
 
 ## **Merge With Remdesivir Administration Info**
