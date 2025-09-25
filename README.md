@@ -62,7 +62,6 @@ Through a single center retrospective cohort study, we examined the SARS-CoV-2 g
 - tidyverse (v.2.0.0)
 - lmerTest (v3.1-3)
 - lme4 (v1.1-37)
-- emmeans (v1.11.2)
 - patchwork (v1.3.1)
 - glmmTMB (v1.1.11)
 - magrittr (v2.0.3)
